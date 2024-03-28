@@ -4,7 +4,9 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 
 from .models import Event
-from .serializers import RegisterUserSerializer, UserSerializer, EventSerializer, UserProfileSerializer
+from .serializers import RegisterUserSerializer, UserSerializer, OrgEventSerializer, UserProfileSerializer, \
+    AtndEventSerializer, EventAttendeesSerializer
+
 
 @api_view(["POST"])
 def validate_register(request):
@@ -34,9 +36,17 @@ def validate_login(request):
 def org_homepage(request):
     if request.method == "GET":
         events = Event.objects.all()
-        event_serializer = EventSerializer(events, many=True)
+        event_serializer = OrgEventSerializer(events, many=True)
         return Response({'events': event_serializer.data})
 
+@api_view(['GET'])
+def atnd_homepage(request):
+    if request.method == 'GET':
+        events = Event.objects.all()
+        event_serializer = AtndEventSerializer(events, many=True)
+        print(event_serializer)
+        return Response({'data': event_serializer.data}, status=status.HTTP_200_OK)
+    return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(["GET"])
