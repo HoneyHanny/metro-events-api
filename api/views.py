@@ -1,8 +1,9 @@
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, generics
-from .serializers import  UserSerializer, AtndEventSerializer
+from .serializers import UserSerializer, AtndEventSerializer
 
 # POST ONLY
 class UserRegister(generics.CreateAPIView):
@@ -30,6 +31,20 @@ class UserLogin(generics.CreateAPIView):
             return Response({"message": "Login Successful"}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# RetrieveAPIView is  used for querying single instance model given a primary-key.
+class QueryUserByPk(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = "id"
+
+
+# [ 'GET', 'DELETE' ]
+class DeleteUserByPk(generics.RetrieveDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = "id"
 
 # @api_view(["POST"])
 # def validate_register(request):
