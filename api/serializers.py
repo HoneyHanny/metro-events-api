@@ -2,7 +2,6 @@ from .models import UserProfile, Event, Attendee
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
-
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
 
@@ -38,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class OrgEventSerializer(serializers.ModelSerializer):
+class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = '__all__'
