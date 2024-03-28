@@ -1,20 +1,36 @@
+from .models import UserProfile, Event
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+
+class RegisterUserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'profile', 'username', 'password']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        UserProfile.objects.create(user=user)
+        return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username']
+        fields = '__all__'
 
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already in use.")
-        return value
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
+class EventSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserProfile
-        fields = ("__all__")
+        model = Event
+        fields = '__all__'
+
+
+
