@@ -135,7 +135,7 @@ def get_event(request, id):
 
     event_serializer = EventSerializer(event)
 
-    return Response({'user': event_serializer.data}, status=status.HTTP_200_OK)  # (OK) not tested yet. Test add event first to test this
+    return Response({'user': event_serializer.data}, status=status.HTTP_200_OK)
 
 # Test: Passed - Has successfully added an event 
 @api_view(['POST'])
