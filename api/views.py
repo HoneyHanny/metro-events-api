@@ -115,8 +115,3 @@ class DeleteUser(generics.DestroyAPIView):
 #         return Response({'data': event_serializer.data}, status=status.HTTP_200_OK)
 #     return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 #
-
-@api_view(["GET"])
-def getData(request):
-    person = {'name':'MetroEvents API Deploy Test', 'age':20}
-    return Response(person)
