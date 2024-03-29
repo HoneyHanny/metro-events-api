@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Event, Attendee
+from .models import UserProfile, Event, Attendee, Comment
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -40,26 +40,12 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
-
-class AtndEventSerializer(serializers.ModelSerializer):
-    eventOrganizer = UserProfileSerializer(read_only=True)
+class CommentSerializer(serializers.ModelSerializer):
+    event = EventSerializer
+    user = UserSerializer
     class Meta:
-        model = Event
-        fields = ['id', 'eventName', 'eventVenue', 'eventDate', 'eventDescription', 'eventNumberOfAttendees',
-                  'eventLikes', 'eventOrganizer']
-
-class AttendeeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Attendee
-        fields = ('user',)
-
-class EventAttendeesSerializer(serializers.ModelSerializer):
-    attendees = AttendeeSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Event
+        model = Comment
         fields = '__all__'
-
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -71,3 +57,26 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # ...
 
         return token
+
+
+
+
+# class AtndEventSerializer(serializers.ModelSerializer):
+#     eventOrganizer = UserProfileSerializer(read_only=True)
+#     class Meta:
+#         model = Event
+#         fields = ['id', 'eventName', 'eventVenue', 'eventDate', 'eventDescription', 'eventNumberOfAttendees',
+#                   'eventLikes', 'eventOrganizer']
+#
+# class AttendeeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Attendee
+#         fields = ('user',)
+#
+# class EventAttendeesSerializer(serializers.ModelSerializer):
+#     attendees = AttendeeSerializer(many=True, read_only=True)
+#
+#     class Meta:
+#         model = Event
+#         fields = '__all__'
+
