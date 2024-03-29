@@ -4,12 +4,12 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 # from rest_framework import status, generics
 from rest_framework import generics, status
-from .serializers import UserSerializer, AtndEventSerializer
+from .serializers import UserSerializer, AtndEventSerializer, RegisterUserSerializer
 
 # POST ONLY
 # Ako ge ukay ang mga parent classes unya their is no need for additional code.
 class UserRegister(generics.CreateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = RegisterUserSerializer
 
     """
         Mo work ni nga code pero bad practice since pag check nako sa parent classes,
