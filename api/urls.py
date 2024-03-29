@@ -16,4 +16,20 @@ urlpatterns = [
   path('user/get/<int:id>/', views.get_user),
   path('user/update/<int:id>/', views.update_user),
   path('user/remove/<int:id>/', views.remove_user),
+
+  # sample usage
+  # api-network/api/register
+  # api-network/login
+  # api-network/homepage
+
+  # api-network/event/get/1
+  # api-network/event/get
+  # api-network/event/add
+  # api-network/event/update/1
+  # api-network/event/remove/1
+
+  # api-network/user/get/
+  # api-network/user/get/1
+  # api-network/user/update/1
+  # api-network/user/remove/1
 ]
