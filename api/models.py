@@ -7,15 +7,15 @@ class UserProfile(models.Model):
   
     def __str__(self):
         return self.user.username
-
 class Event(models.Model):
     eventName = models.TextField(null=True)
     eventVenue = models.TextField(null=True)
-    eventDate = models.DateTimeField(auto_now=True)
+    eventDate = models.DateField()
     eventDescription = models.TextField(null=True)
     eventNumberOfAttendees = models.IntegerField(default=0)
     eventLikes = models.IntegerField(default=0)
-    eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    eventOrganizer = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
+
 
     def __str__(self):
         return self.eventName
@@ -26,3 +26,14 @@ class Attendee(models.Model):
 
     def __str__(self):
         return self.eventOrganizer.user.username
+
+
+class Comment(models.Model):
+    comment = models.TextField(null=False)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+def __str__(self):
+    return f'{self.comment}'

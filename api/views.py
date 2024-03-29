@@ -1,11 +1,13 @@
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import generics, status
-from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer
+
+from .models import Event, Comment
+from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
+    CommentSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+# TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
 # POST ONLY
 # Ako ge ukay ang mga parent classes unya their is no need for additional code.
 class UserRegister(generics.CreateAPIView):
@@ -22,30 +24,47 @@ class UserRegister(generics.CreateAPIView):
     #     user = serializer.save()
     #     return Response(status=status.HTTP_201_CREATED)
 
-# POST ONLY
-class UserLogin(generics.CreateAPIView):
-    serializer_class = UserSerializer
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+class EventList(generics.ListCreateAPIView):
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
     permission_classes = [AllowAny]
 
-    """ 
-        create() for creating object. Although it is possible to use post() but iff (para nako) if you have specific 
-        requirements.
-    """
 
-    def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
+class CommentList(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [AllowAny]
 
-        user = authenticate(username=username, password=password)
 
-        if user is not None:
-            login(request, user)
-            return Response({"message": "Login Successful"}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+# # POST ONLY
+# class UserLogin(generics.CreateAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = [AllowAny]
+#
+#     """
+#         create() for creating object. Although it is possible to use post() but iff (para nako) if you have specific
+#         requirements.
+#     """
+#
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+#
+#         user = authenticate(username=username, password=password)
+#
+#         if user is not None:
+#             login(request, user)
+#             return Response({"message": "Login Successful"}, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # RetrieveAPIView is  used for querying single instance model given a primary-key.
+
+
 class QueryUserByPk(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -71,43 +90,6 @@ class DeleteUser(generics.DestroyAPIView):
     """
         Utilizes the parent classes method to handle the functionality.
     """
-
-
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-# @api_view(["POST"])
-# def validate_register(request):
-#     if request.method == "POST":
-#         user_serializer = RegisterUserSerializer(data=request.data)
-#         if user_serializer.is_valid():
-#             user = user_serializer.save()
-#             return Response(user_serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-# @api_view(['POST', 'GET'])
-# def validate_login(request):
-#     if request.method == "POST":
-#         username = request.data.get('username')
-#         password = request.data.get('password')
-#
-#         user = authenticate(username=username, password=password)
-#
-#         if user is not None:
-#             serializer = UserSerializer(user)
-#             return Response({"message": "Login Successful"}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# @api_view(['GET'])
-# def org_homepage(request):
-#     if request.method == "GET":
-#         events = Event.objects.all()
-#         event_serializer = OrgEventSerializer(events, many=True)
-#         return Response({'events': event_serializer.data})
 #
 # @api_view(['GET'])
 # def atnd_homepage(request):
