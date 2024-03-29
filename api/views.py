@@ -1,14 +1,16 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
 from rest_framework import generics, status
-from .serializers import UserSerializer, RegisterUserSerializer
+from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 # POST ONLY
 # Ako ge ukay ang mga parent classes unya their is no need for additional code.
 class UserRegister(generics.CreateAPIView):
     serializer_class = RegisterUserSerializer
+    permission_classes = [AllowAny]
 
     """
         Mo work ni nga code pero bad practice since pag check nako sa parent classes,
@@ -23,6 +25,7 @@ class UserRegister(generics.CreateAPIView):
 # POST ONLY
 class UserLogin(generics.CreateAPIView):
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
     """ 
         create() for creating object. Although it is possible to use post() but iff (para nako) if you have specific 
@@ -70,6 +73,9 @@ class DeleteUser(generics.DestroyAPIView):
     """
 
 
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 # @api_view(["POST"])
 # def validate_register(request):
