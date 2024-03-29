@@ -16,5 +16,7 @@ urlpatterns = [
   path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
   path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
   path('event/', views.EventList.as_view()),
+  path('event/<int:pk>/', views.SpecificEvent.as_view()),
+  path('comment/<int:pk>/', views.SpecificComment.as_view()),
   path('comment/', views.CommentList.as_view()),
 ]
