@@ -2,9 +2,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-# from rest_framework import status, generics
 from rest_framework import generics, status
-from .serializers import UserSerializer, AtndEventSerializer, RegisterUserSerializer
+from .serializers import UserSerializer, RegisterUserSerializer
 
 # POST ONLY
 # Ako ge ukay ang mga parent classes unya their is no need for additional code.
@@ -51,8 +50,6 @@ class QueryUserByPk(generics.RetrieveAPIView):
     """
         Utilizes the parent classes method to handle the functionality.
     """
-
-
 
 # [ 'GET', 'DELETE' ]
 class DeleteUserByPk(generics.RetrieveDestroyAPIView):
