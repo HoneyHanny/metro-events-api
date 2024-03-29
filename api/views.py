@@ -33,11 +33,23 @@ class EventList(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
 
 
+class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = EventSerializer
+    lookup_field = "pk"
+    permission_classes = [AllowAny]
+
 class CommentList(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [AllowAny]
 
+
+class SpecificComment(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    lookup_field = "pk"
+    permission_classes = [AllowAny]
 
 # # POST ONLY
 # class UserLogin(generics.CreateAPIView):

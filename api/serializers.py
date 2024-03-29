@@ -40,6 +40,7 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
+
 class CommentSerializer(serializers.ModelSerializer):
     event = EventSerializer
     user = UserSerializer
