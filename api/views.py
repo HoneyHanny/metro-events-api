@@ -2,25 +2,35 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework import status, generics
+# from rest_framework import status, generics
+from rest_framework import generics, status
 from .serializers import UserSerializer, AtndEventSerializer
 
 # POST ONLY
+# Ako ge ukay ang mga parent classes unya their is no need for additional code.
 class UserRegister(generics.CreateAPIView):
     serializer_class = UserSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        return Response(status=status.HTTP_201_CREATED)
+    """
+        Mo work ni nga code pero bad practice since pag check nako sa parent classes,
+        ang CreateModelMixin, same implementation so ge utilize nako.
+    """
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     user = serializer.save()
+    #     return Response(status=status.HTTP_201_CREATED)
 
 # POST ONLY
 class UserLogin(generics.CreateAPIView):
-    serializer_class = UserSerializer  # Define the serializer class here
+    serializer_class = UserSerializer
 
-    def create(self, request, *args, **kwargs):
+    """ 
+        create() for creating object. Although it is possible to use post() but iff (para nako) if you have specific 
+        requirements.
+    """
+
+    def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
 
@@ -37,14 +47,32 @@ class UserLogin(generics.CreateAPIView):
 class QueryUserByPk(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    lookup_field = "id"
+
+    """
+        Utilizes the parent classes method to handle the functionality.
+    """
+
 
 
 # [ 'GET', 'DELETE' ]
 class DeleteUserByPk(generics.RetrieveDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    lookup_field = "id"
+
+    """
+        Utilizes the parent classes method to handle the functionality.
+    """
+
+
+class DeleteUser(generics.DestroyAPIView):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+    """
+        Utilizes the parent classes method to handle the functionality.
+    """
+
+
 
 # @api_view(["POST"])
 # def validate_register(request):
