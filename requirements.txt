@@ -3,3 +3,7 @@ Django==5.0.3
 djangorestframework~=3.15.1
 
 django-cors-headers
+
+mysqlclient
+
+djangorestframework-simplejwt
