@@ -4,9 +4,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .models import Event, Comment, Attendee, UserProfile
+from .models import Event, Comment, Attendee, UserProfile, EventLikers
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -32,7 +32,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class EventList(generics.ListCreateAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
@@ -65,10 +65,6 @@ class SpecificComment(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
 
-
-from rest_framework import status
-from rest_framework.response import Response
-
 class JoinEvent(generics.ListCreateAPIView):
     queryset = Attendee.objects.all()
     serializer_class = AttendeeSerializer
@@ -77,10 +73,6 @@ class JoinEvent(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
         try:
-            event = Event.objects.get(pk=event_id)
-            # If the event is found, update the number of attendees
-            event.eventNumberOfAttendees += 1
-            event.save()
 
             # Gather all the information needed sa atong Attendee model.
             attendee_user = User.objects.filter(username=request.user).first()
@@ -91,14 +83,46 @@ class JoinEvent(generics.ListCreateAPIView):
             if Attendee.objects.filter(attendee=attendee_profile, events=attendee_event).exists():
                 return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # If the attendee does not exist, create it
-            attendee = Attendee.objects.create(eventOrganizer=attendee_profile, events=attendee_event)
+            event = Event.objects.get(pk=event_id)
+            event.eventNumberOfAttendees += 1
+            event.save()
+
+            attendee = Attendee.objects.create(attendee=attendee_profile, events=attendee_event)
 
             # Serialize the Attendee object before including it in the response
             serializer = self.serializer_class(attendee)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+class LikeEvent(generics.ListCreateAPIView):
+    queryset = EventLikers.objects.all()
+    serializer_class = EventLikersSerializer
+    permission_classes = [AllowAny]
+    def post(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+            event = Event.objects.get(pk=event_id)
+            # If the event is found, update the number of attendees
+            event.eventLikes += 1
+            event.save()
+
+            # Gather all the information needed sa atong Attendee model.
+            likers = User.objects.filter(username=request.user).first()
+            likers_profile = UserProfile.objects.get(user=likers)
+            liked_event = Event.objects.get(pk=event_id)
+
+            # If existing si user ani nga event
+            if EventLikers.objects.filter(likers=likers_profile, events=liked_event).exists():
+                return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+
+            attendee = EventLikers.objects.create(likers=likers_profile, events=liked_event)
+
+            serializer = self.serializer_class(attendee)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Event.DoesNotExist:
+            return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 # POST ONLY
