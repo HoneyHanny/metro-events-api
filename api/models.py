@@ -56,4 +56,5 @@ class Notification(models.Model):
     recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
 
-
+    def __str__(self):
+        return f'{self.recipient.user.username}'

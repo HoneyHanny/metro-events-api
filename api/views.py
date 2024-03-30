@@ -1,13 +1,14 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
+from django.db import transaction
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest
+from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -131,6 +132,8 @@ class JoinEvenList(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+from django.contrib.auth.models import User
+
 class JoinOrganizerResponse(generics.UpdateAPIView):
     queryset = JoinRequest.objects.all()
     serializer_class = JoinRequestSerializer
@@ -140,28 +143,36 @@ class JoinOrganizerResponse(generics.UpdateAPIView):
         instance = self.get_object()
         accepted = request.data.get('status')
 
-        if accepted is not None:
-            # Update the status of the join request
-            instance.is_accepted = accepted
-            instance.save()
-
-            if accepted:
-                attendee = Attendee.objects.create(
-                    attendee=instance.attendee,
-                    events=instance.event
-                )
-                instance.event.attendee_set.add(attendee)
-                instance.delete()
-                return Response({"message": "Join request accepted and attendee added to event."},
-                                status=status.HTTP_200_OK)
-            else:
-                # If not accepted, delete the join request instance
-                instance.delete()
-                return Response({"message": "Join request rejected."},
-                                status=status.HTTP_200_OK)
-        else:
+        if accepted is None:
             return Response({"error": "Status field is required."},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                # Update the status of the join request
+                instance.is_accepted = accepted
+                instance.save()
+
+                # Create a notification for the user whose request was accepted or declined
+                if accepted:
+                    message = f"Your join request has been accepted for event: {instance.event.eventName}"
+                else:
+                    message = f"Your join request has been declined for event: {instance.event.eventName}"
+
+                recipient_user = instance.attendee.user
+                recipient_profile = UserProfile.objects.get(user=recipient_user)
+                notification = Notification.objects.create(recipient=recipient_profile, message=message)
+                instance.notification = notification
+                instance.save()
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Delete the JoinRequest instance
+        instance.delete()
+
+        return Response({"message": "Join request response processed successfully."},
+                        status=status.HTTP_200_OK)
 class EventLike(generics.RetrieveUpdateDestroyAPIView):
     queryset = EventLikers.objects.all()
     serializer_class = EventLikersSerializer
@@ -192,6 +203,21 @@ class EventLike(generics.RetrieveUpdateDestroyAPIView):
 
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserNotifications(generics.ListAPIView):
+    queryset = Notification.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user.profile)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        print(serializer.data)
+        return Response(serializer.data)
 
 
 # class UserLogin(generics.CreateAPIView):
@@ -232,9 +258,16 @@ class DeleteUserByPk(generics.RetrieveDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    def get_queryset(self):
+        return Event.objects.filter(id=self.kwargs.get('pk'))
     """
-        Utilizes the parent classes method to handle the functionality.
+        Override, since we have custom requirement.
     """
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 # class DeleteUser(generics.DestroyAPIView):
