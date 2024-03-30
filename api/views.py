@@ -1,10 +1,12 @@
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
+from rest_framework.response import Response
 
-from .models import Event, Comment
+from .models import Event, Comment, Attendee, UserProfile
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer
+    CommentSerializer, AttendeeSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -30,14 +32,26 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class EventList(generics.ListCreateAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
 
 class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+    queryset = Event.objects.all()
     serializer_class = EventSerializer
-    lookup_field = "pk"
     permission_classes = [AllowAny]
+
+    """
+        Override, since we have custom requirement.
+    """
+    def put(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+            event = Event.objects.get(pk=event_id)
+            event.eventLikes += 1
+            event.save()
+            return Response(status=status.HTTP_200_OK)
+        except Event.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 class CommentList(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
@@ -49,9 +63,45 @@ class SpecificComment(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     lookup_field = "pk"
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-# # POST ONLY
+
+from rest_framework import status
+from rest_framework.response import Response
+
+class JoinEvent(generics.ListCreateAPIView):
+    queryset = Attendee.objects.all()
+    serializer_class = AttendeeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+            event = Event.objects.get(pk=event_id)
+            # If the event is found, update the number of attendees
+            event.eventNumberOfAttendees += 1
+            event.save()
+
+            # Gather all the information needed sa atong Attendee model.
+            attendee_user = User.objects.filter(username=request.user).first()
+            attendee_profile = UserProfile.objects.get(user=attendee_user)
+            attendee_event = Event.objects.get(pk=event_id)
+
+            # If existing si user ani nga event
+            if Attendee.objects.filter(attendee=attendee_profile, events=attendee_event).exists():
+                return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # If the attendee does not exist, create it
+            attendee = Attendee.objects.create(eventOrganizer=attendee_profile, events=attendee_event)
+
+            # Serialize the Attendee object before including it in the response
+            serializer = self.serializer_class(attendee)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Event.DoesNotExist:
+            return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# POST ONLY
 # class UserLogin(generics.CreateAPIView):
 #     serializer_class = UserSerializer
 #     permission_classes = [AllowAny]
@@ -95,13 +145,13 @@ class DeleteUserByPk(generics.RetrieveDestroyAPIView):
     """
 
 
-class DeleteUser(generics.DestroyAPIView):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-
-    """
-        Utilizes the parent classes method to handle the functionality.
-    """
+# class DeleteUser(generics.DestroyAPIView):
+#     serializer_class = UserSerializer
+#     queryset = User.objects.all()
+#
+#     """
+#         Utilizes the parent classes method to handle the functionality.
+#     """
 #
 # @api_view(['GET'])
 # def atnd_homepage(request):

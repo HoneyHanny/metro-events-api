@@ -48,17 +48,24 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
+class AttendeeSerializer(serializers.ModelSerializer):
+    eventOrganizer = UserProfileSerializer
+    events = EventSerializer
+
+    class Meta:
+        model = Attendee
+        fields = '__all__'
+
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
+        print(token)
         token['username'] = user.username
-        # ...
 
         return token
-
 
 
 

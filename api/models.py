@@ -21,8 +21,8 @@ class Event(models.Model):
         return self.eventName
 
 class Attendee(models.Model):
-    eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    events = models.ManyToManyField(Event, related_name='attendees')
+    attendee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    events = models.ForeignKey(Event, on_delete=models.CASCADE, default=None)
 
     def __str__(self):
         return self.eventOrganizer.user.username
