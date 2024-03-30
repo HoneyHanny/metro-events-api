@@ -40,6 +40,13 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'{self.comment}'
 
-def __str__(self):
-    return f'{self.comment}'
+class JoinRequest(models.Model):
+    attendee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    is_accepted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.attendee.user.username} - {self.event.eventName}'

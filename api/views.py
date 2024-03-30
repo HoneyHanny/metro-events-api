@@ -4,9 +4,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .models import Event, Comment, Attendee, UserProfile, EventLikers
+from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer, EventLikersSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -85,35 +85,63 @@ class CommentListByEventID(generics.RetrieveDestroyAPIView):
         return Response(serializer.data)
 
 
-class JoinEvent(generics.ListCreateAPIView):
-    queryset = Attendee.objects.all()
-    serializer_class = AttendeeSerializer
-    permission_classes = [IsAuthenticated]
+class JoinEvent(generics.CreateAPIView):
+    queryset = JoinRequest.objects.all()  # Use the JoinRequest model
+    serializer_class = JoinRequestSerializer  # Create serializer for JoinRequest
+    permission_classes = [AllowAny]
 
-    def put(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
+        print(event_id)
         try:
+            attendee_user = request.user
 
-            # Gather all the information needed sa atong Attendee model.
-            attendee_user = User.objects.filter(username=request.user).first()
             attendee_profile = UserProfile.objects.get(user=attendee_user)
             attendee_event = Event.objects.get(pk=event_id)
 
-            # If existing si user ani nga event
-            if Attendee.objects.filter(attendee=attendee_profile, events=attendee_event).exists():
-                return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+            if JoinRequest.objects.filter(attendee=attendee_profile, event=attendee_event).exists():
+                return Response({"error": "You have already requested."}, status=status.HTTP_400_BAD_REQUEST)
+            # Create a join request
 
-            event = Event.objects.get(pk=event_id)
-            event.eventNumberOfAttendees += 1
-            event.save()
+            join_request = JoinRequest.objects.create(attendee=attendee_profile, event=attendee_event)
 
-            attendee = Attendee.objects.create(attendee=attendee_profile, events=attendee_event)
-
-            # Serialize the Attendee object before including it in the response
-            serializer = self.serializer_class(attendee)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Serialize the join request object before including it in the response
+            serializer = self.serializer_class(join_request)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # def put(self, request, *args, **kwargs):
+    #     event_id = kwargs.get('pk')
+    #     try:
+    #
+    #         # Gather all the information needed sa atong Attendee model.
+    #         attendee_user = User.objects.filter(username=request.user).first()
+    #         attendee_profile = UserProfile.objects.get(user=attendee_user)
+    #         attendee_event = Event.objects.get(pk=event_id)
+    #
+    #         # If existing si user ani nga event
+    #         if Attendee.objects.filter(attendee=attendee_profile, events=attendee_event).exists():
+    #             return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #         event = Event.objects.get(pk=event_id)
+    #         event.eventNumberOfAttendees += 1
+    #         event.save()
+    #
+    #         attendee = Attendee.objects.create(attendee=attendee_profile, events=attendee_event)
+    #
+    #         # Serialize the Attendee object before including it in the response
+    #         serializer = self.serializer_class(attendee)
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     except Event.DoesNotExist:
+    #         return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class JoinEvenList(generics.ListAPIView):
+    queryset = JoinRequest.objects.all()
+    serializer_class = JoinRequestSerializer
+    permission_classes = [AllowAny]
 
 class EventLike(generics.RetrieveUpdateDestroyAPIView):
     queryset = EventLikers.objects.all()
