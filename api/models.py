@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     isOrganizer = models.BooleanField(default=False)
-  
+
     def __str__(self):
         return self.user.username
 class Event(models.Model):
@@ -14,7 +14,7 @@ class Event(models.Model):
     eventDescription = models.TextField(null=True)
     eventNumberOfAttendees = models.IntegerField(default=0)
     eventLikes = models.IntegerField(default=0)
-    eventOrganizer = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
+    eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 
     def __str__(self):
@@ -40,6 +40,13 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'{self.comment}'
 
-def __str__(self):
-    return f'{self.comment}'
+class JoinRequest(models.Model):
+    attendee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    is_accepted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.attendee.user.username} - {self.event.eventName}'
