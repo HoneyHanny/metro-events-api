@@ -59,11 +59,22 @@ class CommentList(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
 
 
-class SpecificComment(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+
+class CommentListByEvent(generics.RetrieveDestroyAPIView):
     serializer_class = CommentSerializer
+    permission_classes = [AllowAny]
     lookup_field = "pk"
-    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        event_id = self.kwargs.get('pk')
+        return Comment.objects.filter(event_id=event_id)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        print(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class JoinEvent(generics.ListCreateAPIView):
     queryset = Attendee.objects.all()
