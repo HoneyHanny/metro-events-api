@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Event, Attendee, Comment
+from .models import UserProfile, Event, Attendee, Comment, EventLikers
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -48,17 +48,31 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
+class AttendeeSerializer(serializers.ModelSerializer):
+    attendee = UserProfileSerializer
+    events = EventSerializer
+
+    class Meta:
+        model = Attendee
+        fields = '__all__'
+
+class EventLikersSerializer(serializers.ModelSerializer):
+    likers = UserProfileSerializer
+    events = EventSerializer
+
+    class Meta:
+        model = EventLikers
+        fields = '__all__'
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
+        print(token)
         token['username'] = user.username
-        # ...
 
         return token
-
 
 
 

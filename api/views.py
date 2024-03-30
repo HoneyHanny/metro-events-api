@@ -1,10 +1,12 @@
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
+from rest_framework.response import Response
 
-from .models import Event, Comment
+from .models import Event, Comment, Attendee, UserProfile, EventLikers
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -34,10 +36,22 @@ class EventList(generics.ListCreateAPIView):
 
 
 class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+    queryset = Event.objects.all()
     serializer_class = EventSerializer
-    lookup_field = "pk"
     permission_classes = [AllowAny]
+
+    """
+        Override, since we have custom requirement.
+    """
+    # def put(self, request, *args, **kwargs):
+    #     event_id = kwargs.get('pk')
+    #     try:
+    #         event = Event.objects.get(pk=event_id)
+    #         event.eventLikes += 1
+    #         event.save()
+    #         return Response(status=status.HTTP_200_OK)
+    #     except Event.DoesNotExist:
+    #         return Response(status=status.HTTP_404_NOT_FOUND)
 
 class CommentList(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
@@ -45,13 +59,85 @@ class CommentList(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
 
 
-class SpecificComment(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+
+class CommentListByEvent(generics.RetrieveDestroyAPIView):
     serializer_class = CommentSerializer
+    permission_classes = [AllowAny]
     lookup_field = "pk"
+
+    def get_queryset(self):
+        event_id = self.kwargs.get('pk')
+        return Comment.objects.filter(event_id=event_id)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        print(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class JoinEvent(generics.ListCreateAPIView):
+    queryset = Attendee.objects.all()
+    serializer_class = AttendeeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+
+            # Gather all the information needed sa atong Attendee model.
+            attendee_user = User.objects.filter(username=request.user).first()
+            attendee_profile = UserProfile.objects.get(user=attendee_user)
+            attendee_event = Event.objects.get(pk=event_id)
+
+            # If existing si user ani nga event
+            if Attendee.objects.filter(attendee=attendee_profile, events=attendee_event).exists():
+                return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+
+            event = Event.objects.get(pk=event_id)
+            event.eventNumberOfAttendees += 1
+            event.save()
+
+            attendee = Attendee.objects.create(attendee=attendee_profile, events=attendee_event)
+
+            # Serialize the Attendee object before including it in the response
+            serializer = self.serializer_class(attendee)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Event.DoesNotExist:
+            return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+class EventLike(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EventLikers.objects.all()
+    serializer_class = EventLikersSerializer
     permission_classes = [AllowAny]
 
-# # POST ONLY
+    def put(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+            user = request.user
+            liker_profile = UserProfile.objects.get(user=user)
+            liked_event = Event.objects.get(pk=event_id)
+
+            existing_like = EventLikers.objects.filter(likers=liker_profile, eventLiked=liked_event).first()
+
+            if existing_like:
+                existing_like.delete()
+                liked_event.eventLikes -= 1
+                liked_event.save()
+                return Response({"message": "Like removed successfully."}, status=status.HTTP_200_OK)
+            else:
+                new_like = EventLikers.objects.create(likers=liker_profile, eventLiked=liked_event)
+                liked_event.eventLikes += 1
+                liked_event.save()
+                # Save the new EventLikers instance to the database
+                new_like.save()
+                return Response({"message": "Event liked successfully."}, status=status.HTTP_200_OK)
+
+        except Event.DoesNotExist:
+            return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# POST ONLY
 # class UserLogin(generics.CreateAPIView):
 #     serializer_class = UserSerializer
 #     permission_classes = [AllowAny]
@@ -95,13 +181,13 @@ class DeleteUserByPk(generics.RetrieveDestroyAPIView):
     """
 
 
-class DeleteUser(generics.DestroyAPIView):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-
-    """
-        Utilizes the parent classes method to handle the functionality.
-    """
+# class DeleteUser(generics.DestroyAPIView):
+#     serializer_class = UserSerializer
+#     queryset = User.objects.all()
+#
+#     """
+#         Utilizes the parent classes method to handle the functionality.
+#     """
 #
 # @api_view(['GET'])
 # def atnd_homepage(request):
