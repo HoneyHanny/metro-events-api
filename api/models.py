@@ -23,6 +23,9 @@ class EventLikers(models.Model):
     likers = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     eventLiked = models.ForeignKey(Event, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f'{self.likers.user.username} liked {self.eventLiked.eventName}'
+
 class Attendee(models.Model):
     attendee = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     events = models.ForeignKey(Event, on_delete=models.CASCADE, default=None)

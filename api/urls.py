@@ -20,7 +20,7 @@ urlpatterns = [
   # dayon kuhaon ang user gamit sa request.user since authenticted man ni siya.
   path('event/<int:pk>/', views.SpecificEvent.as_view()),
   path('event/join/<int:pk>/', views.JoinEvent.as_view()),
-  path('event/like/<int:pk>/', views.LikeEvent.as_view()),
+  path('event/like/<int:pk>/', views.EventLike.as_view()),
   path('comment/<int:pk>/', views.SpecificComment.as_view()),
   path('comment/', views.CommentList.as_view()),
 ]

@@ -43,15 +43,15 @@ class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
     """
         Override, since we have custom requirement.
     """
-    def put(self, request, *args, **kwargs):
-        event_id = kwargs.get('pk')
-        try:
-            event = Event.objects.get(pk=event_id)
-            event.eventLikes += 1
-            event.save()
-            return Response(status=status.HTTP_200_OK)
-        except Event.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    # def put(self, request, *args, **kwargs):
+    #     event_id = kwargs.get('pk')
+    #     try:
+    #         event = Event.objects.get(pk=event_id)
+    #         event.eventLikes += 1
+    #         event.save()
+    #         return Response(status=status.HTTP_200_OK)
+    #     except Event.DoesNotExist:
+    #         return Response(status=status.HTTP_404_NOT_FOUND)
 
 class CommentList(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
@@ -70,7 +70,7 @@ class JoinEvent(generics.ListCreateAPIView):
     serializer_class = AttendeeSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
         try:
 
@@ -95,34 +95,35 @@ class JoinEvent(generics.ListCreateAPIView):
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-class LikeEvent(generics.ListCreateAPIView):
+class EventLike(generics.RetrieveUpdateDestroyAPIView):
     queryset = EventLikers.objects.all()
     serializer_class = EventLikersSerializer
     permission_classes = [AllowAny]
-    def post(self, request, *args, **kwargs):
+
+    def put(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
         try:
-            event = Event.objects.get(pk=event_id)
-            # If the event is found, update the number of attendees
-            event.eventLikes += 1
-            event.save()
-
-            # Gather all the information needed sa atong Attendee model.
-            likers = User.objects.filter(username=request.user).first()
-            likers_profile = UserProfile.objects.get(user=likers)
+            user = request.user
+            liker_profile = UserProfile.objects.get(user=user)
             liked_event = Event.objects.get(pk=event_id)
 
-            # If existing si user ani nga event
-            if EventLikers.objects.filter(likers=likers_profile, events=liked_event).exists():
-                return Response({"error": "You have already joined this event."}, status=status.HTTP_400_BAD_REQUEST)
+            existing_like = EventLikers.objects.filter(likers=liker_profile, eventLiked=liked_event).first()
 
-            attendee = EventLikers.objects.create(likers=likers_profile, events=liked_event)
+            if existing_like:
+                existing_like.delete()
+                liked_event.eventLikes -= 1
+                liked_event.save()
+                return Response({"message": "Like removed successfully."}, status=status.HTTP_200_OK)
+            else:
+                new_like = EventLikers.objects.create(likers=liker_profile, eventLiked=liked_event)
+                liked_event.eventLikes += 1
+                liked_event.save()
+                # Save the new EventLikers instance to the database
+                new_like.save()
+                return Response({"message": "Event liked successfully."}, status=status.HTTP_200_OK)
 
-            serializer = self.serializer_class(attendee)
-            return Response(serializer.data, status=status.HTTP_200_OK)
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 # POST ONLY
