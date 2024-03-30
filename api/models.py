@@ -50,3 +50,10 @@ class JoinRequest(models.Model):
 
     def __str__(self):
         return f'{self.attendee.user.username} - {self.event.eventName}'
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    message = models.TextField()
+
+

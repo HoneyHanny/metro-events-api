@@ -51,11 +51,12 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    event = EventSerializer
-    user = UserSerializer
+    event = EventSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     class Meta:
         model = Comment
         fields = '__all__'
+
 
 class AttendeeSerializer(serializers.ModelSerializer):
     attendee = UserProfileSerializer

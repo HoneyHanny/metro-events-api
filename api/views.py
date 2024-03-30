@@ -67,9 +67,7 @@ class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
 #     serializer_class = CommentSerializer
 #     permission_classes = [AllowAny]
 
-
-
-class CommentListByEventID(generics.RetrieveDestroyAPIView):
+class CommentListByEventID(generics.ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = [AllowAny]
     lookup_field = "event_id"
@@ -83,6 +81,11 @@ class CommentListByEventID(generics.RetrieveDestroyAPIView):
         print(queryset)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class CommentList(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [AllowAny]
 
 
 class JoinEvent(generics.CreateAPIView):
