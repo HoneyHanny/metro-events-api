@@ -128,25 +128,37 @@ class JoinEvenList(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-
 class JoinOrganizerResponse(generics.UpdateAPIView):
     queryset = JoinRequest.objects.all()
     serializer_class = JoinRequestSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
-        accepted = request.data.get('accepted', False)  # Assuming 'accepted' is a boolean field in the request data
-        instance.is_accepted = accepted
-        instance.save()
+        accepted = request.data.get('status')
 
-        if accepted:
-            instance.event.attendees.add(instance.attendee)
+        if accepted is not None:
+            # Update the status of the join request
+            instance.is_accepted = accepted
+            instance.save()
+
+            if accepted:
+                attendee = Attendee.objects.create(
+                    attendee=instance.attendee,
+                    events=instance.event
+                )
+                instance.event.attendee_set.add(attendee)
+                instance.delete()
+                return Response({"message": "Join request accepted and attendee added to event."},
+                                status=status.HTTP_200_OK)
+            else:
+                # If not accepted, delete the join request instance
+                instance.delete()
+                return Response({"message": "Join request rejected."},
+                                status=status.HTTP_200_OK)
         else:
-            instance.delete()
-
-        return Response({"data":instance}, status=status.HTTP_200_OK)
-
+            return Response({"error": "Status field is required."},
+                            status=status.HTTP_400_BAD_REQUEST)
 class EventLike(generics.RetrieveUpdateDestroyAPIView):
     queryset = EventLikers.objects.all()
     serializer_class = EventLikersSerializer
