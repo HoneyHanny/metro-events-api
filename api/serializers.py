@@ -10,7 +10,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class RegisterUserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer()
+    profile = UserProfileSerializer(read_only=True)
     password = serializers.CharField(write_only=True)
     username = serializers.CharField(write_only=True)
 
@@ -40,6 +40,15 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
+    def validate(self, data):
+        # Check if any event with the same organizer already exists on the given date
+        event_organizer = data.get('eventOrganizer')
+        event_date = data.get('eventDate')
+        if Event.objects.filter(eventOrganizer=event_organizer, eventDate=event_date).exists():
+            raise serializers.ValidationError("An event by this organizer already exists on the same date.")
+
+        return data
+
 
 class CommentSerializer(serializers.ModelSerializer):
     event = EventSerializer
@@ -66,8 +75,8 @@ class EventLikersSerializer(serializers.ModelSerializer):
 
 
 class JoinRequestSerializer(serializers.ModelSerializer):
-    attendee = UserProfile
-    event = Event
+    attendee = UserProfileSerializer(read_only=True)
+    event = EventSerializer(read_only=True)
     class Meta:
         model = JoinRequest
         fields = '__all__'
