@@ -36,13 +36,22 @@ class EventList(generics.ListCreateAPIView):
 
 
 class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [AllowAny]
 
+
+    def get_queryset(self):
+        return Event.objects.filter(id=self.kwargs.get('pk'))
     """
         Override, since we have custom requirement.
     """
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        print(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     # def put(self, request, *args, **kwargs):
     #     event_id = kwargs.get('pk')
     #     try:
@@ -53,20 +62,20 @@ class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
     #     except Event.DoesNotExist:
     #         return Response(status=status.HTTP_404_NOT_FOUND)
 
-class CommentList(generics.ListCreateAPIView):
-    queryset = Comment.objects.all()
+# class CommentList(generics.ListCreateAPIView):
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentSerializer
+#     permission_classes = [AllowAny]
+
+
+
+class CommentListByEventID(generics.RetrieveDestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [AllowAny]
-
-
-
-class CommentListByEvent(generics.RetrieveDestroyAPIView):
-    serializer_class = CommentSerializer
-    permission_classes = [AllowAny]
-    lookup_field = "pk"
+    lookup_field = "event_id"
 
     def get_queryset(self):
-        event_id = self.kwargs.get('pk')
+        event_id = self.kwargs.get('event_id')
         return Comment.objects.filter(event_id=event_id)
 
     def get(self, request, *args, **kwargs):
@@ -110,9 +119,10 @@ class EventLike(generics.RetrieveUpdateDestroyAPIView):
     queryset = EventLikers.objects.all()
     serializer_class = EventLikersSerializer
     permission_classes = [AllowAny]
+    lookup_field = "eventLiked_id"
 
     def put(self, request, *args, **kwargs):
-        event_id = kwargs.get('pk')
+        event_id = kwargs.get("eventLiked_id")
         try:
             user = request.user
             liker_profile = UserProfile.objects.get(user=user)
