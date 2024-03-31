@@ -5,6 +5,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
@@ -287,3 +288,46 @@ class DeleteUserByPk(generics.RetrieveDestroyAPIView):
 #         return Response({'data': event_serializer.data}, status=status.HTTP_200_OK)
 #     return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 #
+
+@api_view(['GET'])
+def get_user_id(request, username):
+    if request.method != 'GET':
+        return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    try:
+        user = User.objects.get(username=username)
+    except:
+        return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    if user is None:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    user_serializer = UserSerializer(user)
+
+    return Response({'user': user_serializer.data}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def create_event(request):
+    if request.method != 'POST':
+        return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    event_serializer = EventSerializer(data=request.data)
+    
+    if not event_serializer.is_valid():
+        return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # All of these commented code might be handled or catched by the previous check already
+    # try:
+    #     json_data = json.loads(request.body)
+    # except:
+    #     return Response({'error': 'Invalid JSON format'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # try:
+    #     User.objects.get(pk=json_data.eventOrganizer)
+    # except:
+    #     return Response({'error': 'Organizer not found or not a valid organizer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    event_serializer.save()
+    
+    return Response({'event': event_serializer.data}, status=status.HTTP_201_CREATED)
+    
