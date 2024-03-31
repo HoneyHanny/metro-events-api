@@ -26,7 +26,7 @@ class UserRegister(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -64,7 +64,7 @@ class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
 #     serializer_class = CommentSerializer
 #     permission_classes = [AllowAny]
 
-class CommentListByEventID(generics.ListAPIView):
+class CommentListByEventID(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [AllowAny]
     lookup_field = "event_id"
@@ -78,6 +78,17 @@ class CommentListByEventID(generics.ListAPIView):
         print(queryset)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        comment = Comment.objects.create(comment=request.data['comment'], user=user, event_id=self.kwargs.get('event_id'))
+        print(comment)
+        comment.save()
+        serializer = self.get_serializer(comment)
+        return Response(serializer.data)
+
+
 
 class CommentList(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
@@ -112,7 +123,9 @@ class JoinEvent(generics.CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class JoinEvenList(generics.ListAPIView):
+
+
+class JoinEventList(generics.ListAPIView):
     serializer_class = JoinRequestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -200,12 +213,15 @@ class EventLike(generics.RetrieveUpdateDestroyAPIView):
 
 
 class UserNotifications(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Notification.objects.all()
-    permission_classes = [AllowAny]
     serializer_class = NotificationSerializer
+    permission_classes = [AllowAny]
+
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient__user__username=self.request.user)
+        username = self.request.user
+        print(username)
+        user = UserProfile.objects.get(user__username=self.request.user)
+        return Notification.objects.filter(recipient__user_id=user.user_id)
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -213,6 +229,11 @@ class UserNotifications(generics.RetrieveUpdateDestroyAPIView):
         print(serializer.data)
         return Response(serializer.data)
 
+
+class UserNotificationsList(generics.ListAPIView):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [AllowAny]
 
 # class UserLogin(generics.CreateAPIView):
 #     serializer_class = UserSerializer
@@ -242,6 +263,7 @@ class UserNotifications(generics.RetrieveUpdateDestroyAPIView):
 class QueryUserByPk(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
     """
         Utilizes the parent classes method to handle the functionality.
@@ -299,28 +321,28 @@ def get_user_id(request, username):
 
     return Response({'user': user_serializer.data}, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
-def create_event(request):
-    if request.method != 'POST':
-        return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    event_serializer = EventSerializer(data=request.data)
-    
-    if not event_serializer.is_valid():
-        return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # All of these commented code might be handled or catched by the previous check already
-    # try:
-    #     json_data = json.loads(request.body)
-    # except:
-    #     return Response({'error': 'Invalid JSON format'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # try:
-    #     User.objects.get(pk=json_data.eventOrganizer)
-    # except:
-    #     return Response({'error': 'Organizer not found or not a valid organizer'}, status=status.HTTP_400_BAD_REQUEST)
-
-    event_serializer.save()
-    
-    return Response({'event': event_serializer.data}, status=status.HTTP_201_CREATED)
-    
+# @api_view(['POST'])
+# def create_event(request):
+#     if request.method != 'POST':
+#         return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+#
+#     event_serializer = EventSerializer(data=request.data)
+#
+#     if not event_serializer.is_valid():
+#         return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     # All of these commented code might be handled or catched by the previous check already
+#     # try:
+#     #     json_data = json.loads(request.body)
+#     # except:
+#     #     return Response({'error': 'Invalid JSON format'}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     # try:
+#     #     User.objects.get(pk=json_data.eventOrganizer)
+#     # except:
+#     #     return Response({'error': 'Organizer not found or not a valid organizer'}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     event_serializer.save()
+#
+#     return Response({'event': event_serializer.data}, status=status.HTTP_201_CREATED)
+#

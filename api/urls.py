@@ -19,13 +19,14 @@ urlpatterns = [
   path('event/', views.EventList.as_view()),
   # Ang ako approach sa join event kay inig click sa join button, dapat mo fetch siya og pk sa event
   # dayon kuhaon ang user gamit sa request.user since authenticted man ni siya.
-  path('event/create/', views.create_event),
+  # path('event/create/', views.create_event),
   path('event/<int:pk>/', views.SpecificEvent.as_view()),
-  path('event/join/request/', views.JoinEvenList.as_view()),
+  path('event/join/request/', views.JoinEventList.as_view()),
   path('event/join/request/<int:pk>/', views.JoinEvent.as_view()),
   path('event/join/request/response/<int:pk>/', views.JoinOrganizerResponse.as_view()),
   path('event/like/<int:eventLiked_id>/', views.EventLike.as_view()),
   path('event/comment/<int:event_id>/', views.CommentListByEventID.as_view()),
   path('event/comment/', views.CommentList.as_view()),
-  path('event/notification/', views.UserNotifications.as_view())
+  path('event/notification/', views.UserNotifications.as_view()),
+  path('event-notification/', views.UserNotificationsList.as_view())
 ]
