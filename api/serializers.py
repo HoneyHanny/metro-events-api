@@ -35,6 +35,16 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return data
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
+class UserIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id']
+
 class EventSerializer(serializers.ModelSerializer):
     eventOrganizer = UserProfileSerializer(read_only=True)  # Nest UserProfileSerializer here
 
