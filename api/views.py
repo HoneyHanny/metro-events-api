@@ -1,11 +1,10 @@
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.db import transaction
-from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
 
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
@@ -128,8 +127,6 @@ class JoinEvenList(generics.ListAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-from django.contrib.auth.models import User
 
 class JoinOrganizerResponse(generics.UpdateAPIView):
     queryset = JoinRequest.objects.all()

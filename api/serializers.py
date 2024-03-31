@@ -34,12 +34,6 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Username is already in use')
         return data
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'password']
-
 class UserIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
