@@ -41,16 +41,12 @@ class SpecificEvent(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EventSerializer
     permission_classes = [AllowAny]
 
-
     def get_queryset(self):
         return Event.objects.filter(id=self.kwargs.get('pk'))
-    """
-        Override, since we have custom requirement.
-    """
 
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     # def put(self, request, *args, **kwargs):
@@ -205,13 +201,13 @@ class EventLike(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserNotifications(generics.ListAPIView):
+class UserNotifications(generics.RetrieveUpdateDestroyAPIView):
     queryset = Notification.objects.all()
     permission_classes = [AllowAny]
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user.profile)
+        return Notification.objects.filter(recipient__user__username=self.request.user)
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
