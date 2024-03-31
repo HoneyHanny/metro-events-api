@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest
+from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -51,11 +51,12 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    event = EventSerializer
-    user = UserSerializer
+    event = EventSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     class Meta:
         model = Comment
         fields = '__all__'
+
 
 class AttendeeSerializer(serializers.ModelSerializer):
     attendee = UserProfileSerializer
@@ -81,6 +82,13 @@ class JoinRequestSerializer(serializers.ModelSerializer):
         model = JoinRequest
         fields = '__all__'
 
+
+class NotificationSerializer(serializers.ModelSerializer):
+    recipient = UserProfileSerializer(read_only=True)  # Serialize the recipient UserProfile
+
+    class Meta:
+        model = Notification
+        fields = '__all__'
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

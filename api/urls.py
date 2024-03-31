@@ -24,5 +24,6 @@ urlpatterns = [
   path('event/join/request/response/<int:pk>/', views.JoinOrganizerResponse.as_view()),
   path('event/like/<int:eventLiked_id>/', views.EventLike.as_view()),
   path('event/comment/<int:event_id>/', views.CommentListByEventID.as_view()),
-  # path('comment/', views.CommentList.as_view()),
+  path('event/comment/', views.CommentList.as_view()),
+  path('event/notification/', views.UserNotifications.as_view())
 ]
