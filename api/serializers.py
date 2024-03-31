@@ -2,9 +2,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification
 from rest_framework import serializers
-from django.contrib.auth.models import User
 
+from django.contrib.auth.models import User
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile = UserSerializer(read_only=True)
     class Meta:
         model = UserProfile
         fields = '__all__'
@@ -29,18 +34,14 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Username is already in use')
         return data
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'password']
-
 class UserIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id']
 
 class EventSerializer(serializers.ModelSerializer):
+    eventOrganizer = UserProfileSerializer(read_only=True)  # Nest UserProfileSerializer here
+
     class Meta:
         model = Event
         fields = '__all__'
@@ -64,16 +65,16 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class AttendeeSerializer(serializers.ModelSerializer):
-    attendee = UserProfileSerializer
-    events = EventSerializer
+    attendee = UserProfileSerializer(read_only=True)
+    events = EventSerializer(read_only=True)
 
     class Meta:
         model = Attendee
         fields = '__all__'
 
 class EventLikersSerializer(serializers.ModelSerializer):
-    likers = UserProfileSerializer
-    events = EventSerializer
+    likers = UserProfileSerializer(read_only=True)
+    events = EventSerializer(read_only=True)
 
     class Meta:
         model = EventLikers
