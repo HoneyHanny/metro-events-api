@@ -33,7 +33,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'password', 'id']
+        fields = ['username', 'password']
+
+class UserIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id']
 
 class EventSerializer(serializers.ModelSerializer):
     class Meta:

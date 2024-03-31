@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view
 
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, UserIdSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -302,7 +302,7 @@ def get_user_id(request, username):
     if user is None:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    user_serializer = UserSerializer(user)
+    user_serializer = UserIdSerializer(user)
 
     return Response({'user': user_serializer.data}, status=status.HTTP_200_OK)
 
