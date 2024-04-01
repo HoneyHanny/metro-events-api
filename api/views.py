@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, UserIdSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, UserIdSerializer, OrganizerSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -259,7 +259,6 @@ class UserNotificationsList(generics.ListAPIView):
 
 # RetrieveAPIView is  used for querying single instance model given a primary-key.
 
-
 class QueryUserByPk(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -268,6 +267,11 @@ class QueryUserByPk(generics.RetrieveAPIView):
     """
         Utilizes the parent classes method to handle the functionality.
     """
+
+class Organizer(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = OrganizerSerializer
+    permission_classes = [AllowAny]
 
 # [ 'GET', 'DELETE' ]
 class DeleteUserByPk(generics.RetrieveDestroyAPIView):
