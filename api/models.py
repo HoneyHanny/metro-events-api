@@ -17,6 +17,8 @@ class Event(models.Model):
     eventLikes = models.IntegerField(default=0)
     eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
+    attendees = models.ManyToManyField(UserProfile, through='Attendee', related_name='attended_events')
+
     def __str__(self):
         return self.eventName
 
@@ -51,7 +53,6 @@ class JoinRequest(models.Model):
 
     def __str__(self):
         return f'{self.attendee.user.username} - {self.event.eventName}'
-
 
 class Notification(models.Model):
     recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
