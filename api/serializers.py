@@ -10,6 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username']
 
+class OrganizerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['is_staff']
+
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
