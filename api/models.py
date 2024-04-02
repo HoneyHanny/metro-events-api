@@ -30,16 +30,15 @@ class EventLikers(models.Model):
         return f'{self.likers.user.username} liked {self.eventLiked.eventName}'
 
 class NonOrganizerEvent(models.Model):
-    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='non_organizer_events')
     eventName = models.TextField(null=True)
     eventVenue = models.TextField(null=True)
     eventDate = models.DateField()
     eventDescription = models.TextField(null=True)
     eventNumberOfAttendees = models.IntegerField(default=0)
     eventLikes = models.IntegerField(default=0)
-    eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='non_organizer_events_organized')
+    eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
-    def __str__(self):
+def __str__(self):
         return f"{self.user_profile.user.username}'s event: {self.eventName}"
 
 class Attendee(models.Model):

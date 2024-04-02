@@ -263,27 +263,48 @@ class UserNotificationsList(generics.ListAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [AllowAny]
 
-
 class EventCreate(generics.CreateAPIView):
-    serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
-    def post(self, request, *args, **kwargs):
-        try:
-            user_profile = request.user.profile
-            if not user_profile.isOrganizer:
-                # If the user is not an organizer, save the event to NonOrganizerEvent
-                serializer = NonOrganizerEventSerializer(data=request.data)
-            else:
-                # If the user is an organizer, save the event to Event
-                serializer = EventSerializer(data=request.data)
+    serializer_class = EventSerializer
 
-            print("YOU MADE IT!")
-            if serializer.is_valid():
-                serializer.save(eventOrganizer=user_profile)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        user_profile = self.request.user.profile  # Assuming UserProfile is related to the User model
+        if user_profile.isOrganizer:
+            serializer.save(eventOrganizer=user_profile)
+        else:
+            non_organizer_event_data = serializer.validated_data
+            non_organizer_event = NonOrganizerEvent.objects.create(**non_organizer_event_data,eventOrganizer=user_profile)
+            return Response({"message": "Event created for non-organizer"}, status=status.HTTP_201_CREATED)
+
+class ApprovedOrganizer(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = NonOrganizerEvent.objects.all()
+    serializer_class = NonOrganizerEventSerializer
+
+    def post(self, request, *args, **kwargs):
+        non_organizer_events = self.get_queryset()
+
+        for event in non_organizer_events:
+            is_organizer = event.eventOrganizer.isOrganizer
+            if is_organizer:
+                # Move the event to the Event table
+                Event.objects.create(
+                    eventName=event.eventName,
+                    eventVenue=event.eventVenue,
+                    eventDate=event.eventDate,
+                    eventDescription=event.eventDescription,
+                    eventNumberOfAttendees=event.eventNumberOfAttendees,
+                    eventLikes=event.eventLikes,
+                    eventOrganizer=event.eventOrganizer
+                )
+
+                # Delete the instance from the NonOrganizerEvent table
+                event.delete()
+
+        return Response({"message": "Events moved to organizer's events"}, status=status.HTTP_200_OK)
+
+
+
 
 
 # class UserLogin(generics.CreateAPIView):
