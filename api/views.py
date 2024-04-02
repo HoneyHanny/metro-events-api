@@ -281,31 +281,27 @@ class ApprovedOrganizer(generics.RetrieveUpdateDestroyAPIView):
     queryset = NonOrganizerEvent.objects.all()
     serializer_class = NonOrganizerEventSerializer
 
-    def perform_update(self, serializer):
-        instance = serializer.instance
-        is_organizer = serializer.validated_data.get('isOrganizer', False)
+    def post(self, request, *args, **kwargs):
+        non_organizer_events = self.get_queryset()
 
-        if is_organizer:
-            # Move the event to the Event table
-            Event.objects.create(
-                eventName=instance.eventName,
-                eventVenue=instance.eventVenue,
-                eventDate=instance.eventDate,
-                eventDescription=instance.eventDescription,
-                eventNumberOfAttendees=instance.eventNumberOfAttendees,
-                eventLikes=instance.eventLikes,
-                eventOrganizer=instance.eventOrganizer
-            )
+        for event in non_organizer_events:
+            is_organizer = event.eventOrganizer.isOrganizer
+            if is_organizer:
+                # Move the event to the Event table
+                Event.objects.create(
+                    eventName=event.eventName,
+                    eventVenue=event.eventVenue,
+                    eventDate=event.eventDate,
+                    eventDescription=event.eventDescription,
+                    eventNumberOfAttendees=event.eventNumberOfAttendees,
+                    eventLikes=event.eventLikes,
+                    eventOrganizer=event.eventOrganizer
+                )
 
-            # Delete the instance from the NonOrganizerEvent table
-            instance.delete()
+                # Delete the instance from the NonOrganizerEvent table
+                event.delete()
 
-            return Response({"message": "Event moved to organizer's events"}, status=status.HTTP_200_OK)
-        else:
-            # Update the instance if it remains a non-organizer event
-            serializer.save()
-
-            return Response({"message": "Non-organizer event updated"}, status=status.HTTP_200_OK)
+        return Response({"message": "Events moved to organizer's events"}, status=status.HTTP_200_OK)
 
 
 
