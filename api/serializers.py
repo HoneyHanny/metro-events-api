@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification
+from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification, NonOrganizerEvent
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -77,6 +77,14 @@ class EventLikersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventLikers
+        fields = '__all__'
+
+class NonOrganizerEventSerializer(serializers.ModelSerializer):
+    user_profile = UserProfileSerializer(read_only=True)
+    event = EventSerializer(read_only=True)
+
+    class Meta:
+        model = NonOrganizerEvent
         fields = '__all__'
 
 class JoinRequestSerializer(serializers.ModelSerializer):
