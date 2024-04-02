@@ -8,7 +8,8 @@ from django.contrib.auth.models import User
 
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
-    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, UserIdSerializer
+    CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, \
+    UserIdSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
@@ -96,6 +97,7 @@ class CommentList(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
 
 
+
 class JoinEvent(generics.CreateAPIView):
     serializer_class = JoinRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -103,9 +105,12 @@ class JoinEvent(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
         try:
-            attendee_user = User.objects.get(username=request.user)
-            attendee_profile = UserProfile.objects.get(user=attendee_user)
+            attendee_user = request.user
+            attendee_profile = attendee_user.profile
             attendee_event = Event.objects.get(pk=event_id)
+
+            if attendee_event.attendees.filter(user=attendee_user).exists():
+                return Response({"error": "You are already attending this event."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Check if the attendee already exists for this event
             if JoinRequest.objects.filter(attendee=attendee_profile, event=attendee_event).exists():
@@ -118,11 +123,10 @@ class JoinEvent(generics.CreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Event.DoesNotExist:
             return Response({"error": "Event does not exist."}, status=status.HTTP_404_NOT_FOUND)
-        except (User.DoesNotExist, UserProfile.DoesNotExist):
-            return Response({"error": "User or UserProfile does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({"error": "UserProfile does not exist."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class JoinEventList(generics.ListAPIView):
@@ -136,13 +140,36 @@ class JoinEventList(generics.ListAPIView):
         # Filter the join requests by events created by the authenticated user
         return JoinRequest.objects.filter(event__eventOrganizer__user=user)
 
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    def post(self, request, *args, **kwargs):
+        event_id = request.data.get('event')
+        user_profile = request.user.profile
 
+        if not event_id:
+            return Response({"error": "Event ID is required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            event = Event.objects.get(pk=event_id)
+        except Event.DoesNotExist:
+            return Response({"error": "Event does not exist."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if Attendee.objects.filter(events=event, attendee=user_profile).exists():
+            return Response({"error": "You are already attending this event."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Create a join request
+        join_request = JoinRequest.objects.create(event=event, attendee=user_profile)
+
+        serializer = JoinRequestSerializer(join_request)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 class JoinOrganizerResponse(generics.UpdateAPIView):
     queryset = JoinRequest.objects.all()
+    serializer_class = JoinRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    class JoinOrganizerResponse(generics.UpdateAPIView):
+        queryset = JoinRequest.objects.all()
     serializer_class = JoinRequestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -163,6 +190,12 @@ class JoinOrganizerResponse(generics.UpdateAPIView):
                 # Create a notification for the user whose request was accepted or declined
                 if accepted:
                     message = f"Your join request has been accepted for event: {instance.event.eventName}"
+
+                    # Add the attendee to the event
+                    event = instance.event
+                    attendee_profile = instance.attendee
+                    attendee, created = Attendee.objects.get_or_create(attendee=attendee_profile, events=event)
+
                 else:
                     message = f"Your join request has been declined for event: {instance.event.eventName}"
 
@@ -221,7 +254,7 @@ class UserNotifications(generics.RetrieveUpdateDestroyAPIView):
         username = self.request.user
         print(username)
         user = UserProfile.objects.get(user__username=self.request.user)
-        return Notification.objects.filter(recipient__user_id=user.user_id)
+        return Notification.objects.filter(recipient__user_id=user.user_id).order_by('-id')
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -234,6 +267,7 @@ class UserNotificationsList(generics.ListAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [AllowAny]
+
 
 # class UserLogin(generics.CreateAPIView):
 #     serializer_class = UserSerializer
