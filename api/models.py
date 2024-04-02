@@ -7,6 +7,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
 class Event(models.Model):
     eventName = models.TextField(null=True)
     eventVenue = models.TextField(null=True)
@@ -16,9 +17,9 @@ class Event(models.Model):
     eventLikes = models.IntegerField(default=0)
     eventOrganizer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
-
     def __str__(self):
         return self.eventName
+
 class EventLikers(models.Model):
     likers = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     eventLiked = models.ForeignKey(Event, on_delete=models.CASCADE)
