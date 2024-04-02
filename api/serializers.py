@@ -2,12 +2,13 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification
+from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification, NonOrganizerEvent
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password']
+        fields = ['id', 'username']
 
 class OrganizerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,13 +53,6 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
-    def validate(self, data):
-        event_organizer = data.get('eventOrganizer')
-        event_date = data.get('eventDate')
-        if Event.objects.filter(eventOrganizer=event_organizer, eventDate=event_date).exists():
-            raise serializers.ValidationError("An event by this organizer already exists on the same date.")
-        return data
-
 class CommentSerializer(serializers.ModelSerializer):
     event = EventSerializer(read_only=True)
     user = UserSerializer(read_only=True)
@@ -83,6 +77,12 @@ class EventLikersSerializer(serializers.ModelSerializer):
         model = EventLikers
         fields = '__all__'
 
+class NonOrganizerEventSerializer(serializers.ModelSerializer):
+    user_profile = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = NonOrganizerEvent
+        fields = '__all__'
+
 class JoinRequestSerializer(serializers.ModelSerializer):
     attendee = UserProfileSerializer(read_only=True)
     event = EventSerializer(read_only=True)
@@ -104,3 +104,5 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         return token
+
+
