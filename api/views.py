@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from .models import Event, Comment, Attendee, UserProfile, EventLikers, JoinRequest, Notification, NonOrganizerEvent
 from .serializers import UserSerializer, RegisterUserSerializer, MyTokenObtainPairSerializer, EventSerializer, \
     CommentSerializer, AttendeeSerializer, EventLikersSerializer, JoinRequestSerializer, NotificationSerializer, \
-    UserIdSerializer, NonOrganizerEventSerializer
+    UserIdSerializer, NonOrganizerEventSerializer, OrganizerSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 # TODO: Please ayaw pag erase og bisag isa nga comment. Thank you!
