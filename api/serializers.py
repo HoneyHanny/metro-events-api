@@ -4,10 +4,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import UserProfile, Event, Attendee, Comment, EventLikers, JoinRequest, Notification
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password']
+        fields = ['id', 'username']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -99,3 +100,5 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         return token
+
+
