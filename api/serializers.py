@@ -42,6 +42,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return data
 
 class UserIdSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
         fields = ['id']
